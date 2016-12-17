@@ -4,6 +4,8 @@ import sys
 import re
 from collections import OrderedDict
 
+import pymorphy2
+
 import urllib.request
 import urllib
 import urllib.parse
@@ -15,8 +17,7 @@ try:
 except IndexError:
     np = "транспортная карта"
 
-def decline(np):
-    np = np.lower()
+def decline_morpher_ru(np):
     parameters = {"s": np}
     parameters_encoded = urllib.parse.urlencode(parameters).encode("utf-8")
     req = urllib.request.Request(url="http://api.morpher.ru/WebService.asmx/GetXml", data=parameters_encoded)
@@ -27,9 +28,6 @@ def decline(np):
 
     soup = BeautifulSoup(resp, "xml")
     page_text = soup.findAll(text=True)
-  #  page_text = []
-   # page_text = (text for text in soup.find_all(text=True) if text.parent.name not in ["Ф", "И", "О"])
-    #print(page_text)
     forms = []
     forms.append(np)
     #space count is needed to exclude parsed personal names of people
@@ -44,13 +42,79 @@ def decline(np):
                 forms.append(i)
             else:
                 fio = True
+    forms = list(OrderedDict.fromkeys(forms))
+    return forms
+
+def decline_pymorphy2(np):
+    forms = []
+    forms.append(np)
+    morph = pymorphy2.MorphAnalyzer()
+    np_list = np.split()
+    #p = morph.parse(np)
+    #print(p.normal_form)
+    nom_found = False
+    gender = ""
+    number_of_nom = 0
+    for word in enumerate(np_list):
+        if word[0] == 0:
+            for anal in enumerate(morph.parse(word[1])):
+                if anal[1].tag.case == "nomn":
+                    print(anal[0])
+                    number_of_nom = anal[0]
+        p = morph.parse(word[1])[0]
+        if (p.tag.case == "nomn") and (nom_found == False):
+            gender = p.tag.gender
+            nom_found = True
+    cases = ['gent', 'datv', 'accs', 'ablt', 'loct']
+    normal = False
+    for case in cases:
+        non_nom_found = False
+        a = []
+        first_word = normal
+        for word in np_list:
+            if first_word == True:
+                p = morph.parse(word)[number_of_nom]
+            else:
+                p = morph.parse(word)[0]
+            first_word = False
+            if (p.tag.case == "nomn") and (non_nom_found == False):
+                a.append(p.inflect({'sing', case, gender}).word)
+            else:
+                a.append(word)
+                non_nom_found = True
+        forms.append(" ".join(a))
+    for case in cases:
+        non_nom_found = False
+        a = []
+        first_word = normal
+        for word in np_list:
+            if first_word == True:
+                p = morph.parse(word)[number_of_nom]
+            else:
+                p = morph.parse(word)[0]
+            first_word = False
+            if (p.tag.case == "nomn") and (non_nom_found == False):
+                try:
+                    a.append(p.inflect({'plur', case, gender}).word)
+                except AttributeError:
+                    a.append(p.inflect({'plur', case}).word)
+            else:
+                a.append(word)
+        forms.append(" ".join(a))
+    print(forms)
+    return forms
+
+def decline(np):
+    #forms2 = decline_morpher_ru(np)
+    forms2 = decline_pymorphy2(np)
+    forms = []
+    for i in forms2:
+        forms.append(i.lower())
     forms_sg = list(OrderedDict.fromkeys(forms[0:6]))
     forms = list(OrderedDict.fromkeys(forms))
     forms_lists = []
     for form in forms:
         forms_lists.append(form.split())
-    #print(forms_lists)
-
     forms_familiya_io = []
     for form in forms_lists:
         if len(form) >= 3:
