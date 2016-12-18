@@ -105,8 +105,8 @@ def decline_pymorphy2(np):
     return forms
 
 def decline(np):
-    #forms2 = decline_morpher_ru(np)
-    forms2 = decline_pymorphy2(np)
+    forms2 = decline_morpher_ru(np)
+    #forms2 = decline_pymorphy2(np)
     forms = []
     for i in forms2:
         forms.append(i.lower())
@@ -115,6 +115,7 @@ def decline(np):
     forms_lists = []
     for form in forms:
         forms_lists.append(form.split())
+
     forms_familiya_io = []
     for form in forms_lists:
         if len(form) >= 3:
@@ -136,6 +137,13 @@ def decline(np):
             forms_imya_familiya.append(imya_familiya)
     forms_imya_familiya = list(OrderedDict.fromkeys(forms_imya_familiya))
 
+    forms_imya_otch_familiya = []
+    for form in forms_lists:
+        if len(form) >= 3:
+            imya_otch_familiya = form[1] + ' ' + form[2] + ' ' + form[0]
+            forms_imya_otch_familiya.append(imya_otch_familiya)
+    forms_imya_otch_familiya = list(OrderedDict.fromkeys(forms_imya_otch_familiya))
+
     forms_familiya_imya = []
     for form in forms_lists:
         if len(form) >= 2:
@@ -143,9 +151,9 @@ def decline(np):
             forms_familiya_imya.append(familiya_imya)
     forms_familiya_imya = list(OrderedDict.fromkeys(forms_familiya_imya))
 
-    return forms, forms_sg, forms_familiya_io, forms_io_familiya, forms_imya_familiya, forms_familiya_imya
+    return forms, forms_sg, forms_familiya_io, forms_io_familiya, forms_imya_familiya, forms_familiya_imya, forms_imya_otch_familiya
 
-a, sg, fam_io, io_fam, imya_fam, fam_imya = decline(np)
+a, sg, fam_io, io_fam, imya_fam, fam_imya, imya_otch_fam = decline(np)
 
 
 kribrum_search_string = "(\"" + "\" | \"".join(a) + "\")"
@@ -154,6 +162,7 @@ kribrum_search_string_fam_io = "(\"" + "\" | \"".join(fam_io) + "\")"
 kribrum_search_string_io_fam = "(\"" + "\" | \"".join(io_fam) + "\")"
 kribrum_search_string_fam_imya = "(\"" + "\" | \"".join(fam_imya) + "\")"
 kribrum_search_string_imya_fam = "(\"" + "\" | \"".join(imya_fam) + "\")"
+kribrum_search_string_imya_otch_fam = "(\"" + "\" | \"".join(imya_otch_fam) + "\")"
 kribrum_minus_string = "-\"" + "\" -\"".join(a) + "\""
 with open("declension.txt", "a", encoding="utf-8") as out_file:
-    out_file.write(kribrum_search_string_fam_io + '\n' + kribrum_search_string_io_fam + '\n' + kribrum_search_string_fam_imya + '\n' + kribrum_search_string_imya_fam + '\n' + kribrum_search_string + '\n' + kribrum_search_string_sg + '\n\n' + kribrum_minus_string + '\n\n')
+    out_file.write(kribrum_search_string_fam_io + '\n' + kribrum_search_string_io_fam + '\n' + kribrum_search_string_imya_otch_fam + '\n' + kribrum_search_string_fam_imya + '\n' + kribrum_search_string_imya_fam + '\n' + kribrum_search_string + '\n' + kribrum_search_string_sg + '\n\n' + kribrum_minus_string + '\n\n')
