@@ -6,11 +6,11 @@ from collections import OrderedDict
 
 import pymorphy2
 
-import json
-
 import urllib.request
 import urllib
 import urllib.parse
+
+import json
 
 from bs4 import BeautifulSoup
 
@@ -44,6 +44,7 @@ def decline_morpher_ru(np):
                 forms.append(i)
             else:
                 fio = True
+    
     forms_unique = list(OrderedDict.fromkeys(forms))
     return forms, forms_unique
 
@@ -106,6 +107,7 @@ def decline_pymorphy2(np):
     print(forms)
     return forms
 
+
 def decline(np):
     with open("forms_dict.json") as forms_dict_file:
         forms_dict = json.loads(forms_dict_file.read())
@@ -164,18 +166,43 @@ def decline(np):
             forms_familiya_imya.append(familiya_imya)
     forms_familiya_imya = list(OrderedDict.fromkeys(forms_familiya_imya))
 
-    return forms, forms_sg, forms_familiya_io, forms_io_familiya, forms_imya_familiya, forms_familiya_imya, forms_imya_otch_familiya
+    return forms, forms_sg, forms_familiya_io, forms_io_familiya, forms_imya_familiya, forms_familiya_imya, forms_imya_otch_familiya, forms_all
 
-a, sg, fam_io, io_fam, imya_fam, fam_imya, imya_otch_fam = decline(np)
+def write_all(np):
+    a, sg, fam_io, io_fam, imya_fam, fam_imya, imya_otch_fam, forms_all = decline(np)
+    kribrum_search_string = "(\"" + "\" | \"".join(a) + "\")"
+    kribrum_search_string_sg = "(\"" + "\" | \"".join(sg) + "\")"
+    kribrum_search_string_fam_io = "(\"" + "\" | \"".join(fam_io) + "\")"
+    kribrum_search_string_io_fam = "(\"" + "\" | \"".join(io_fam) + "\")"
+    kribrum_search_string_fam_imya = "(\"" + "\" | \"".join(fam_imya) + "\")"
+    kribrum_search_string_imya_fam = "(\"" + "\" | \"".join(imya_fam) + "\")"
+    kribrum_search_string_imya_otch_fam = "(\"" + "\" | \"".join(imya_otch_fam) + "\")"
+    kribrum_minus_string = "-\"" + "\" -\"".join(a) + "\""
+    with open("declension.txt", "a", encoding="utf-8") as out_file:
+        out_file.write(kribrum_search_string_fam_io + '\n' + kribrum_search_string_io_fam + '\n' + kribrum_search_string_imya_otch_fam + '\n' + kribrum_search_string_fam_imya + '\n' + kribrum_search_string_imya_fam + '\n' + kribrum_search_string + '\n' + kribrum_search_string_sg + '\n\n' + kribrum_minus_string + '\n\n')
+    return forms_all
 
+final_string = ""
+all_forms = []
+with open("data") as data_file:
+    other = False
+    for line in data_file:
+        line = line.strip()
+        if len(line) > 0:
+            if line[0].isupper():
+                other = True
+            if other == False:
+                all_forms.append(write_all(line))
+print(all_forms)
 
-kribrum_search_string = "(\"" + "\" | \"".join(a) + "\")"
-kribrum_search_string_sg = "(\"" + "\" | \"".join(sg) + "\")"
-kribrum_search_string_fam_io = "(\"" + "\" | \"".join(fam_io) + "\")"
-kribrum_search_string_io_fam = "(\"" + "\" | \"".join(io_fam) + "\")"
-kribrum_search_string_fam_imya = "(\"" + "\" | \"".join(fam_imya) + "\")"
-kribrum_search_string_imya_fam = "(\"" + "\" | \"".join(imya_fam) + "\")"
-kribrum_search_string_imya_otch_fam = "(\"" + "\" | \"".join(imya_otch_fam) + "\")"
-kribrum_minus_string = "-\"" + "\" -\"".join(a) + "\""
-with open("declension.txt", "a", encoding="utf-8") as out_file:
-    out_file.write(kribrum_search_string_fam_io + '\n' + kribrum_search_string_io_fam + '\n' + kribrum_search_string_imya_otch_fam + '\n' + kribrum_search_string_fam_imya + '\n' + kribrum_search_string_imya_fam + '\n' + kribrum_search_string + '\n' + kribrum_search_string_sg + '\n\n' + kribrum_minus_string + '\n\n')
+with open("case_forms.txt", "a") as case_forms_file:
+    case_forms_file.write("\n\n\n")
+    for i in all_forms:
+        try:
+            case_forms_file.write(i[0] + "\n")
+        except IndexError:
+            pass
+        try:
+            case_forms_file.write(i[6] + "\n")
+        except IndexError:
+            pass
