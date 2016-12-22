@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 '''Input: input_1, input_2.
-Output: comdined_free.txt.
+Output: combined_free.txt.
 Combinations are being written with quotes and brackets.
 '''
 
@@ -21,7 +21,7 @@ with open("input_2") as input_2_file:
             input_2.append(line)
 
 def disjunction_str(inp):
-    kribrum_search_string = "(\"" + "\" | \"".join(inp) + "\")"
+    kribrum_search_string = "(\"" + "\"|\"".join(inp) + "\")"
     return kribrum_search_string
 
 def chunks(l, n):
@@ -29,7 +29,7 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
-input_1_lists = list(chunks(input_1, 15))
+input_1_lists = list(chunks(input_1, 13))
 input_2_lists = list(chunks(input_2, 10))
 
 input_1_chunked_strings = []

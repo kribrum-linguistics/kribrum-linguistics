@@ -205,4 +205,4 @@ with open("case_forms.txt", "a") as case_forms_file:
     case_forms_file.write("\n\n\n")
     for i in all_forms_u:
         for j in i:
-            case_forms_file.write(j + "\n")
+            case_forms_file.write(j.lower() + "\n")

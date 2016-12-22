@@ -184,7 +184,7 @@ def write_all(np):
 
 final_string = ""
 all_forms = []
-with open("data") as data_file:
+with open("input_1") as data_file:
     other = False
     for line in data_file:
         line = line.strip()
@@ -195,14 +195,58 @@ with open("data") as data_file:
                 all_forms.append(write_all(line))
 print(all_forms)
 
+case = {
+    0: "NOM",
+    1: "GEN",
+    2: "DAT",
+    3: "ACC",
+    4: "INSTR",
+    5: "LOC",
+    6: "NOM.PL",
+    7: "GEN.PL",
+    8: "DAT.PL",
+    9: "ACC.PL",
+    10: "INSTR.PL",
+    11: "LOC.PL",
+}
+
+def decl_by_case(all_forms):
+    by_case_string = ""
+    for j in range(12):
+        by_case_string += case[j] + "\n"
+        for i in all_forms:
+            try:
+                by_case_string += i[j] + "\n"
+            except IndexError:
+                pass
+        by_case_string += "\n"
+    by_case_string += "\nSG and PL\n\n"
+    for j in range(6):
+        by_case_string += case[j] + "\n"
+        for i in all_forms:
+            try:
+                by_case_string += i[j] + "\n"
+            except IndexError:
+                pass
+            try:
+                by_case_string += i[j + 6] + "\n"
+            except IndexError:
+                pass
+        by_case_string += "\n"
+    return by_case_string
+
+def decl_by_case_success(all_forms):
+    by_case_string = "\nALL CASES\n"
+    for j in range(12):
+        for i in all_forms:
+            try:
+                by_case_string += i[j] + "\n"
+            except IndexError:
+                pass
+    return by_case_string
+
+
 with open("case_forms.txt", "a") as case_forms_file:
-    case_forms_file.write("\n\n\n")
-    for i in all_forms:
-        try:
-            case_forms_file.write(i[0] + "\n")
-        except IndexError:
-            pass
-        try:
-            case_forms_file.write(i[6] + "\n")
-        except IndexError:
-            pass
+    case_forms_file.write("\n\n")
+    case_forms_file.write(decl_by_case(all_forms))
+    case_forms_file.write(decl_by_case_success(all_forms))
