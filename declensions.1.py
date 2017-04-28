@@ -1,23 +1,32 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import json
 import sys
+import urllib
+import urllib.parse
+import urllib.request
 import re
 from collections import OrderedDict
 
-import pymorphy2
-
-import urllib.request
-import urllib
-import urllib.parse
-
-import json
-
 from bs4 import BeautifulSoup
+
+import pymorphy2
 
 try:
     np = sys.argv[1]
 except IndexError:
     np = "транспортная карта"
+
+with open("case_forms.txt", "w", encoding="utf-8") as out_file:
+    out_file.write("")
+
+def kribrum_normal_form(string):
+    string = string.lower()
+    string = re.sub("\W", " ", string)
+    string = re.sub("\s+", " ", string)
+    string = re.sub("(ё|ё)", "е", string)
+    string = string.strip()
+    return string
 
 def decline_morpher_ru(np):
     parameters = {"s": np}
@@ -44,7 +53,6 @@ def decline_morpher_ru(np):
                 forms.append(i)
             else:
                 fio = True
-    
     forms_unique = list(OrderedDict.fromkeys(forms))
     return forms, forms_unique
 
@@ -80,7 +88,7 @@ def decline_pymorphy2(np):
             else:
                 p = morph.parse(word)[0]
             first_word = False
-            if (p.tag.case == "nomn") and (non_nom_found == False):
+            if (p.tag.case == "nomn") and (not non_nom_found):
                 a.append(p.inflect({'sing', case, gender}).word)
             else:
                 a.append(word)
@@ -96,7 +104,7 @@ def decline_pymorphy2(np):
             else:
                 p = morph.parse(word)[0]
             first_word = False
-            if (p.tag.case == "nomn") and (non_nom_found == False):
+            if (p.tag.case == "nomn") and (not non_nom_found):
                 try:
                     a.append(p.inflect({'plur', case, gender}).word)
                 except AttributeError:
@@ -124,8 +132,8 @@ def decline(np):
     #forms2 = decline_pymorphy2(np)
     forms = []
     for i in forms2:
-        forms.append(i.lower())
-    forms_sg = list(OrderedDict.fromkeys(forms[0:6]))
+        forms.append(i)
+    forms_sg = list(OrderedDict.fromkeys(forms[0:5]))
     forms = list(OrderedDict.fromkeys(forms))
     forms_lists = []
     for form in forms:
@@ -170,26 +178,50 @@ def decline(np):
 
 def write_all(np):
     a, sg, fam_io, io_fam, imya_fam, fam_imya, imya_otch_fam, forms_all = decline(np)
-    kribrum_search_string = "(\"" + "\" | \"".join(a) + "\")"
-    kribrum_search_string_sg = "(\"" + "\" | \"".join(sg) + "\")"
-    kribrum_search_string_fam_io = "(\"" + "\" | \"".join(fam_io) + "\")"
-    kribrum_search_string_io_fam = "(\"" + "\" | \"".join(io_fam) + "\")"
-    kribrum_search_string_fam_imya = "(\"" + "\" | \"".join(fam_imya) + "\")"
-    kribrum_search_string_imya_fam = "(\"" + "\" | \"".join(imya_fam) + "\")"
-    kribrum_search_string_imya_otch_fam = "(\"" + "\" | \"".join(imya_otch_fam) + "\")"
-    kribrum_minus_string = "-\"" + "\" -\"".join(a) + "\""
-    with open("declension.txt", "a", encoding="utf-8") as out_file:
+    a_k = []
+    for i in a:
+        a_k.append(kribrum_normal_form(i))
+    sg_k = []
+    for i in sg:
+        sg_k.append(kribrum_normal_form(i))
+    fam_io_k = []
+    for i in fam_io:
+        fam_io_k.append(kribrum_normal_form(i))
+    io_fam_k = []
+    for i in io_fam:
+        io_fam_k.append(kribrum_normal_form(i))
+    imya_fam_k = []
+    for i in imya_fam:
+        imya_fam_k.append(kribrum_normal_form(i))
+    fam_imya_k = []
+    for i in fam_imya:
+        fam_imya_k.append(kribrum_normal_form(i))
+    imya_otch_fam_k = []
+    for i in imya_otch_fam:
+        imya_otch_fam_k.append(kribrum_normal_form(i))
+    a_k = []
+    for i in a:
+        a_k.append(kribrum_normal_form(i))
+    kribrum_search_string = "(\"" + "\"|\"".join(a_k) + "\")"
+    kribrum_search_string_sg = "(\"" + "\"|\"".join(sg_k) + "\")"
+    kribrum_search_string_fam_io = "(\"" + "\"|\"".join(fam_io_k) + "\")"
+    kribrum_search_string_io_fam = "(\"" + "\"|\"".join(io_fam_k) + "\")"
+    kribrum_search_string_fam_imya = "(\"" + "\"|\"".join(fam_imya_k) + "\")"
+    kribrum_search_string_imya_fam = "(\"" + "\"|\"".join(imya_fam_k) + "\")"
+    kribrum_search_string_imya_otch_fam = "(\"" + "\"|\"".join(imya_otch_fam_k) + "\")"
+    kribrum_minus_string = "-\"" + "\" -\"".join(a_k) + "\""
+    with open("case_forms.txt", "a", encoding="utf-8") as out_file:
         out_file.write(kribrum_search_string_fam_io + '\n' + kribrum_search_string_io_fam + '\n' + kribrum_search_string_imya_otch_fam + '\n' + kribrum_search_string_fam_imya + '\n' + kribrum_search_string_imya_fam + '\n' + kribrum_search_string + '\n' + kribrum_search_string_sg + '\n\n' + kribrum_minus_string + '\n\n')
     return forms_all
 
-final_string = ""
 all_forms = []
 with open("input_1") as data_file:
     other = False
     for line in data_file:
         line = line.strip()
+        line = line.replace("\u0301", "")
         if len(line) > 0:
-            if line[0].isupper():
+            if line[0] == "=":
                 other = True
             if other == False:
                 all_forms.append(write_all(line))
@@ -216,7 +248,7 @@ def decl_by_case(all_forms):
         by_case_string += case[j] + "\n"
         for i in all_forms:
             try:
-                by_case_string += i[j] + "\n"
+                by_case_string += kribrum_normal_form(i[j]) + "\n"
             except IndexError:
                 pass
         by_case_string += "\n"
@@ -225,11 +257,11 @@ def decl_by_case(all_forms):
         by_case_string += case[j] + "\n"
         for i in all_forms:
             try:
-                by_case_string += i[j] + "\n"
+                by_case_string += kribrum_normal_form(i[j]) + "\n"
             except IndexError:
                 pass
             try:
-                by_case_string += i[j + 6] + "\n"
+                by_case_string += kribrum_normal_form(i[j + 6]) + "\n"
             except IndexError:
                 pass
         by_case_string += "\n"
@@ -237,16 +269,44 @@ def decl_by_case(all_forms):
 
 def decl_by_case_success(all_forms):
     by_case_string = "\nALL CASES\n"
+    uniques = []
     for j in range(12):
         for i in all_forms:
             try:
-                by_case_string += i[j] + "\n"
+                if i[j] not in uniques:
+                    by_case_string += kribrum_normal_form(i[j]) + "\n"
+                uniques.append(i[j])
             except IndexError:
                 pass
     return by_case_string
+
+def decl_by_case_sg_success(all_forms):
+    by_case_string = "\nALL CASES, SG\n"
+    uniques = []
+    for j in range(6):
+        for i in all_forms:
+            try:
+                if i[j] not in uniques:
+                    by_case_string += kribrum_normal_form(i[j]) + "\n"
+                uniques.append(i[j])
+            except IndexError:
+                pass
+    return by_case_string
+
+def decl_by_term_success(all_forms):
+    by_term_string = "\nALL TERMS\n"
+    uniques = []
+    for i in all_forms:
+        for j in i:
+            if j not in uniques:
+                by_term_string += kribrum_normal_form(j) + "\n"
+            uniques.append(j)
+    return by_term_string
 
 
 with open("case_forms.txt", "a") as case_forms_file:
     case_forms_file.write("\n\n")
     case_forms_file.write(decl_by_case(all_forms))
     case_forms_file.write(decl_by_case_success(all_forms))
+    case_forms_file.write(decl_by_case_sg_success(all_forms))
+    case_forms_file.write(decl_by_term_success(all_forms))
